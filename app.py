@@ -75,7 +75,13 @@ def main():
 
     # Sidebar for navigation and search
     st.sidebar.title("AI Agent Configurations")
-
+    
+    # GitHub repository badge in sidebar
+    st.sidebar.markdown(
+        "[![View on GitHub](https://img.shields.io/badge/View_on_GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/danielrosehill/LLM-Assistants-Web-Library)",
+        unsafe_allow_html=True
+    )
+    
     # Search functionality
     search_term = st.sidebar.text_input("Search configurations")
     if search_term:
@@ -116,6 +122,18 @@ def main():
             st.success("Configuration copied to clipboard!")
     else:
         st.write("Select a configuration from the sidebar to view its details.")
+    
+    # Footer with GitHub badge
+    st.markdown(
+        """
+        <div style="position: fixed; bottom: 0; width: 100%; background-color: #f0f0f0; padding: 10px; text-align: center;">
+            <a href="https://github.com/danielrosehill/LLM-Assistants-Web-Library" target="_blank">
+                <img src="https://img.shields.io/badge/View_on_GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="View on GitHub">
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()
