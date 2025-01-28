@@ -1,6 +1,16 @@
 # LLM Assistants - Web UI
 
- 
+ ![alt text](screenshots/v1.png)
+
+[![View On Streamlit Cloud](https://img.shields.io/badge/View%20On-Streamlit%20Cloud-FF4B4B?logo=streamlit)](https://assistantconfigs.streamlit.app/)
+
+This repository contains a collection of configurations for large language model assistants. 
+
+I created this Streamlit app for my own purpose as I was tired of copying and pasting my configurations into various tools that I was trying out. 
+
+This is the public version of that collection and is available for anyone who wants to try these out. 
+
+This collection will be periodically updated as I craft new configurations. 
 
 
 ## Use Case Statement
