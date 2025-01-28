@@ -1,24 +1,37 @@
 import os
 import streamlit as st
 import pyperclip
+import yaml
 
 # Function to convert folder names to readable format
 def format_folder_name(folder_name):
     return folder_name.replace("-", " ").title()
 
-# Function to load markdown files and extract the first header as the title
-def load_markdown_title(file_path):
+# Function to load markdown files and extract YAML front matter and content
+def load_markdown(file_path):
     with open(file_path, 'r') as file:
-        lines = file.readlines()
-        for line in lines:
-            if line.startswith('# '):
-                return line.strip('# ').strip()
-    return os.path.basename(file_path).replace(".md", "").replace("-", " ").title()
+        content = file.read()
+    
+    # Check for YAML front matter
+    if content.startswith('---'):
+        parts = content.split('---', 2)
+        if len(parts) >= 3:
+            yaml_content = parts[1].strip()
+            markdown_content = parts[2].strip()
+            try:
+                front_matter = yaml.safe_load(yaml_content)
+                return front_matter, markdown_content
+            except yaml.YAMLError:
+                return {}, content
+    return {}, content
 
-# Function to load markdown content
-def load_markdown_content(file_path):
-    with open(file_path, 'r') as file:
-        return file.read()
+# Function to extract the first header from markdown content
+def extract_first_header(markdown_content):
+    lines = markdown_content.split('\n')
+    for line in lines:
+        if line.startswith('# '):
+            return line.strip('# ').strip()
+    return "Untitled Configuration"  # Fallback title if no header is found
 
 # Function to recursively build the sidebar navigation
 def build_sidebar_navigation(base_path, current_path):
@@ -29,8 +42,12 @@ def build_sidebar_navigation(base_path, current_path):
             with st.sidebar.expander(format_folder_name(item)):
                 build_sidebar_navigation(base_path, item_path)
         elif item.endswith('.md'):
-            title = load_markdown_title(item_path)
-            if st.sidebar.button(title, key=item_path):
+            front_matter, markdown_content = load_markdown(item_path)
+            title = extract_first_header(markdown_content)
+            # Add binoculars icon if vision is enabled
+            vision = front_matter.get("vision", "")
+            vision_icon = " 🔭" if str(vision).lower() == "yes" else ""
+            if st.sidebar.button(f"{title}{vision_icon}", key=item_path):
                 st.session_state['selected_file'] = item_path
 
 # Function to search for configurations
@@ -40,9 +57,9 @@ def search_configurations(base_path, search_term):
         for file in files:
             if file.endswith('.md'):
                 file_path = os.path.join(root, file)
-                content = load_markdown_content(file_path)
-                if search_term.lower() in content.lower():
-                    matches.append((file_path, load_markdown_title(file_path)))
+                _, markdown_content = load_markdown(file_path)
+                if search_term.lower() in markdown_content.lower():
+                    matches.append((file_path, extract_first_header(markdown_content)))
     return matches
 
 # Main function to run the Streamlit app
@@ -75,12 +92,27 @@ def main():
         build_sidebar_navigation(base_path, base_path)
 
     # Main content area
+    st.title("Daniel Rosehill AI Assistant Library")
+    st.markdown(
+        """
+        <div style="background-color: #f0f0f0; padding: 10px; border-radius: 10px; margin-bottom: 20px;">
+            <p style="margin: 0;">This microsite contains open source configurations for AI assistants.</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
     if st.session_state['selected_file']:
-        st.title(load_markdown_title(st.session_state['selected_file']))
-        content = load_markdown_content(st.session_state['selected_file'])
-        st.markdown(content, unsafe_allow_html=True)
-        if st.button("Copy to Clipboard"):
-            pyperclip.copy(content)
+        front_matter, markdown_content = load_markdown(st.session_state['selected_file'])
+        # Display copy button at the top
+        if st.button("Copy to Clipboard (Top)", key="copy_top"):
+            pyperclip.copy(markdown_content)
+            st.success("Configuration copied to clipboard!")
+        # Display markdown content
+        st.markdown(markdown_content, unsafe_allow_html=True)
+        # Display copy button at the bottom
+        if st.button("Copy to Clipboard (Bottom)", key="copy_bottom"):
+            pyperclip.copy(markdown_content)
             st.success("Configuration copied to clipboard!")
     else:
         st.write("Select a configuration from the sidebar to view its details.")

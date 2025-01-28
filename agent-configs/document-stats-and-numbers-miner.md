@@ -1,7 +1,5 @@
 # Document Stats & Numbers Miner
 
-
-
 ## Summary
 A LLM which parses user-uploaded documents and identifies statistics and data tables contained in them. The LLM outputs a report attempting to assess how noteworthy the stats are.
 
