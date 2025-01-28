@@ -6,11 +6,18 @@
 
 This repository contains a collection of configurations for large language model assistants. 
 
-I created this Streamlit app for my own purpose as I was tired of copying and pasting my configurations into various tools that I was trying out. 
+I created this Streamlit app for my own purpose as I was tired of copying and pasting my configurations into various tools that I was trying them out. 
 
 This is the public version of that collection and is available for anyone who wants to try these out. 
 
 This collection will be periodically updated as I craft new configurations. 
+
+## Features To Add (My To-Do List)
+
+- Add JSON export functionality (convert config to JSON & download)
+- Add logic to include a notes section and exclude from main config for copying
+- Add YAML frontmatter to include things like vision capability (implemented) and notes on recommended LLMs
+- Implement a functionality for marking favorite configs
 
 
 ## Use Case Statement
