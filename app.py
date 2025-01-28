@@ -26,12 +26,18 @@ def load_markdown(file_path):
     return {}, content
 
 # Function to extract the first header from markdown content
-def extract_first_header(markdown_content):
+def extract_title_and_body(markdown_content):
     lines = markdown_content.split('\n')
-    for line in lines:
+    title = "Untitled Configuration"
+    body = markdown_content
+    
+    for i, line in enumerate(lines):
         if line.startswith('# '):
-            return line.strip('# ').strip()
-    return "Untitled Configuration"  # Fallback title if no header is found
+            title = line.strip('# ').strip()
+            body = '\n'.join(lines[i+1:]).strip()
+            break
+    
+    return title, body
 
 # Function to recursively build the sidebar navigation
 def build_sidebar_navigation(base_path, current_path):
@@ -43,7 +49,7 @@ def build_sidebar_navigation(base_path, current_path):
                 build_sidebar_navigation(base_path, item_path)
         elif item.endswith('.md'):
             front_matter, markdown_content = load_markdown(item_path)
-            title = extract_first_header(markdown_content)
+            title, _ = extract_title_and_body(markdown_content)
             # Add binoculars icon if vision is enabled
             vision = front_matter.get("vision", "")
             vision_icon = " 🔭" if str(vision).lower() == "yes" else ""
@@ -58,8 +64,9 @@ def search_configurations(base_path, search_term):
             if file.endswith('.md'):
                 file_path = os.path.join(root, file)
                 _, markdown_content = load_markdown(file_path)
+                title, body = extract_title_and_body(markdown_content)
                 if search_term.lower() in markdown_content.lower():
-                    matches.append((file_path, extract_first_header(markdown_content)))
+                    matches.append((file_path, title))
     return matches
 
 # Main function to run the Streamlit app
@@ -110,16 +117,36 @@ def main():
 
     if st.session_state['selected_file']:
         front_matter, markdown_content = load_markdown(st.session_state['selected_file'])
-        # Display copy button at the top
-        if st.button("Copy to Clipboard (Top)", key="copy_top"):
-            pyperclip.copy(markdown_content)
-            st.success("Configuration copied to clipboard!")
+        title, body = extract_title_and_body(markdown_content)
+        
+        # Display title
+        st.markdown(f"# {title}")
+        
+        # Create a container for copy buttons
+        with st.container():
+            st.write("Copy options:")
+            button_col1, button_col2, _ = st.columns([2, 2, 8])
+            
+            with button_col1:
+                if st.button("📋  Copy Title", 
+                           key="copy_title",
+                           help="Copy title to clipboard",
+                           type="secondary"):
+                    pyperclip.copy(title)
+                    st.success("Title copied!")
+            
+            with button_col2:
+                if st.button("📄  Copy Content", 
+                           key="copy_body",
+                           help="Copy full content to clipboard",
+                           type="secondary"):
+                    pyperclip.copy(body)
+                    st.success("Content copied!")
+        
+        st.divider()
+        
         # Display markdown content
-        st.markdown(markdown_content, unsafe_allow_html=True)
-        # Display copy button at the bottom
-        if st.button("Copy to Clipboard (Bottom)", key="copy_bottom"):
-            pyperclip.copy(markdown_content)
-            st.success("Configuration copied to clipboard!")
+        st.markdown(body, unsafe_allow_html=True)
     else:
         st.write("Select a configuration from the sidebar to view its details.")
     
