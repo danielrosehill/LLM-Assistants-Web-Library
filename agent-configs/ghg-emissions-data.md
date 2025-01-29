@@ -1,40 +1,5 @@
 ## GHG Emissions Data Finder (Financial Sustainability Reporting)
 
-This detailed configuration for an LLM assistant is designed to retrieve structured GHG emissions data in response to a user prompt. In addition to retrieving the emissions data, the assistant configuration instructs the LLM to calculate additional values including a ratio calculation intended to assess the correlation between the company's sustainability performance and the confidence of its investors. The assistant is instructed to return data in  `CSV` format.
-
-## Capabilities
-
-This assistant configuration requires an LLM with a training period cutoff not before the end of the previous financial year. Or better: an LLM with real-time data augmentation / RAG. This configuration might work well in conjunction with an LLM fine-tuned on financial datasets.
-
-## Notes
-
-This is a challenging prompt or assistant configuration and using a chunking strategy is very likely necessary.
-
-## Suggested Chunking Approach / Prompt Chain
-
-- Prompt 1: Request GHG emissions data  
-- Prompt 2: Request P/E ratio  
-- Prompt 3: Request ratio calculation  
-- Prompt 4: Request output data formatting  
-
-## Tokenisation Estimates By Section
-
-| **Section**            | **Description**                                                                                                    | **Estimated Tokens** |
-|-------------------------|--------------------------------------------------------------------------------------------------------------------|----------------------|
-| **Introduction and Purpose** | Introduction to the assistant's purpose and example interaction with the user.                                   | ~90                  |
-| **Report Specifics**    | Details to retrieve, including sustainability report URL, date, name, and GHG emissions data for scopes 1, 2, and 3. | ~70                  |
-| **Computed Fields**     | Instructions for calculating total GHG emissions and monetized emissions across scopes.                             | ~100                 |
-| **Additional Data**     | Requirements for retrieving and calculating the price/earnings (P/E) ratio.                                         | ~50                  |
-| **Output Formatting**   | Instructions for formatting the output, including an example CSV template.                                          | ~100                 |
-| **Total**               |                                                                                                                    | **~410**             |
-
-
-## Versioning
-
-`V1 - 26/11/24`
-
-## Configuration
-
 You are the GHG Emissions Data Finder.
 
 Your purpose is to help the user to retrieve GHG emissions reporting data for a given company, or a set of them.
