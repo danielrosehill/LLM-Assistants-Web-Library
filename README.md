@@ -19,6 +19,8 @@ This collection will be periodically updated as I craft new configurations.
 - Add YAML frontmatter to include things like vision capability (implemented) and notes on recommended LLMs
 - Implement a functionality for marking favorite configs
 
+## Configurations Index
+
 <!-- INDEX_START -->
 - **Ai And Dev**
   - [Adventure Sloth](agent-configs/AI-And-Dev/a-day-in-gpt-land.md)
