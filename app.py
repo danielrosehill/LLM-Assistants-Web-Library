@@ -14,8 +14,12 @@ def format_folder_name(folder_name):
 
 # Function to load markdown files and extract YAML front matter and content
 def load_markdown(file_path):
-    with open(file_path, 'r') as file:
-        content = file.read()
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+    except Exception as e:
+        st.error(f"Error reading file: {file_path}. Details: {e}")
+        return {'tags': []}, ""  # Return empty content and tags on error
     
     # Check for YAML front matter
     if content.startswith('---'):
@@ -32,40 +36,57 @@ def load_markdown(file_path):
                 else:
                     front_matter['tags'] = []
                 return front_matter, markdown_content
-            except yaml.YAMLError:
+            except yaml.YAMLError as e:
+                st.error(f"YAML error in {file_path}: {e}. YAML content: {yaml_content}")
                 return {'tags': []}, content
     return {'tags': []}, content
 
 # Function to extract the first header from markdown content
-def extract_title_and_body(markdown_content):
-    lines = markdown_content.split('\n')
-    title = "Untitled Configuration"
-    body = markdown_content
+def extract_title_and_body(markdown_content, filename):
+    title = filename
+    body = markdown_content.strip()
     
-    for i, line in enumerate(lines):
-        if line.startswith('# '):
+    for line in markdown_content.splitlines():
+        if line.strip().startswith('# '):
             title = line.strip('# ').strip()
-            body = '\n'.join(lines[i+1:]).strip()
+            body = markdown_content[markdown_content.find(line) + len(line):].strip()
             break
-    
+        
     return title, body
 
+# Function to generate a title from a file path
+def generate_title_from_file(file_path, markdown_content):
+        file_name = os.path.basename(file_path)
+        file_name_no_ext, _ = os.path.splitext(file_name)
+        title = file_name_no_ext.replace("-", " ").title()
+
+        # only attempt H1 if there is content
+        if markdown_content:
+          title, _ = extract_title_and_body(markdown_content, title)
+        
+        return title
+
 # Function to recursively build the sidebar navigation
-def build_sidebar_navigation(base_path, current_path):
-    items = os.listdir(current_path)
-    for item in sorted(items):
+def build_sidebar_navigation(base_path, current_path, level=0):
+    items = sorted(os.listdir(current_path)) # sort here
+    for item in items:
         item_path = os.path.join(current_path, item)
         if os.path.isdir(item_path):
-            with st.sidebar.expander(format_folder_name(item)):
-                build_sidebar_navigation(base_path, item_path)
+            if level == 0: # Top-level directories (no expander)
+                st.sidebar.markdown(f"**{format_folder_name(item)}**")
+                build_sidebar_navigation(base_path, item_path, level + 1) # Use recursion for nested subfolders
+            else: # subdirectories
+                 with st.sidebar.expander(format_folder_name(item), expanded=True):
+                   build_sidebar_navigation(base_path, item_path, level + 1)
         elif item.endswith('.md'):
             front_matter, markdown_content = load_markdown(item_path)
-            title, _ = extract_title_and_body(markdown_content)
+            title = generate_title_from_file(item_path, markdown_content)
             # Add binoculars icon if vision is enabled
             vision = front_matter.get("vision", "")
             vision_icon = " 🔭" if str(vision).lower() == "yes" else ""
-            if st.sidebar.button(f"{title}{vision_icon}", key=item_path):
-                st.session_state['selected_file'] = item_path
+            with st.sidebar.container():
+               if st.sidebar.button(f"{title}{vision_icon}", key=item_path, use_container_width=True):
+                  st.session_state['selected_file'] = item_path
 
 # Function to search for configurations
 def search_configurations(base_path, search_term, selected_tags=None):
@@ -75,7 +96,7 @@ def search_configurations(base_path, search_term, selected_tags=None):
             if file.endswith('.md'):
                 file_path = os.path.join(root, file)
                 front_matter, markdown_content = load_markdown(file_path)
-                title, body = extract_title_and_body(markdown_content)
+                title = generate_title_from_file(file_path, markdown_content)
                 
                 # Check if content matches search term and tags
                 content_matches = search_term.lower() in markdown_content.lower()
@@ -135,8 +156,8 @@ def main():
         for file in files:
             if file.endswith('.md'):
                 file_path = os.path.join(root, file)
-                front_matter, _ = load_markdown(file_path)
-                title, _ = extract_title_and_body(_)
+                front_matter, markdown_content = load_markdown(file_path)
+                title = generate_title_from_file(file_path, markdown_content)
                 last_modified = os.path.getmtime(file_path)
                 all_configs.append({
                     'path': file_path,
@@ -168,10 +189,11 @@ def main():
     if st.session_state['favorites']:
         st.sidebar.markdown("### Favorites")
         for file_path in st.session_state['favorites']:
-            front_matter, _ = load_markdown(file_path)
-            title, _ = extract_title_and_body(_)
-            if st.sidebar.button(f"⭐ {title}", key=f"fav_{file_path}"):
-                st.session_state['selected_file'] = file_path
+            front_matter, markdown_content = load_markdown(file_path)
+            title = generate_title_from_file(file_path, markdown_content)
+            with st.sidebar.container():
+               if st.sidebar.button(f"⭐ {title}", key=f"fav_{file_path}", use_container_width=True):
+                    st.session_state['selected_file'] = file_path
         st.sidebar.divider()
     
     if search_term or selected_tags:
@@ -179,8 +201,9 @@ def main():
         if matches:
             st.sidebar.write("Search Results:")
             for file_path, title, tags in matches:
-                if st.sidebar.button(f"{title} ({', '.join(tags)})", key=f"search_{file_path}"):
-                    st.session_state['selected_file'] = file_path
+                with st.sidebar.container():
+                   if st.sidebar.button(f"{title} ({', '.join(tags)})", key=f"search_{file_path}", use_container_width=True):
+                      st.session_state['selected_file'] = file_path
         else:
             st.sidebar.write("No matches found.")
     else:
@@ -200,7 +223,7 @@ def main():
 
     if st.session_state['selected_file']:
         front_matter, markdown_content = load_markdown(st.session_state['selected_file'])
-        title, body = extract_title_and_body(markdown_content)
+        title, body = extract_title_and_body(markdown_content, title)
         
         # Display title and metadata
         st.markdown(f"# {title}")
